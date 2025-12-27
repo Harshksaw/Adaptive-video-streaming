@@ -31,6 +31,7 @@
     // "noPropertyAccessFromIndexSignature": true,
 
     // Recommended Options
+
     "strict": true,
     "jsx": "react-jsx",
     "verbatimModuleSyntax": true,
@@ -38,5 +39,8 @@
     "noUncheckedSideEffectImports": true,
     "moduleDetection": "force",
     "skipLibCheck": true,
-  }
+  },
+  "exclude":["node_modules"],
+  "include":["./src/**/*.ts"]
+
 }
