@@ -1,10 +1,12 @@
-import {express } from 'express';
-import upload from '../middleware/multer.middleware.ts'
-import {uploadVideoController} from  '../controllers/video.controller.ts'
+import { Router } from 'express';
+import upload from '../middleware/multer.middleware.js'
+import uploadVideoController from '../controllers/video.controller.js'
 
 
-const videoRouter = express.Router();
+const videoRouter = Router();
 
 
 
-videoRouter.post('upload', upload.single(''), uploadVideoController)
+videoRouter.post('/upload', upload.single('video'), uploadVideoController)
+
+export default videoRouter;

@@ -8,4 +8,4 @@ const upload = multer(
 
 )
 
-export default multer
+export default upload
