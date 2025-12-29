@@ -42,7 +42,7 @@ export default function VideoUploadForm() {
       setUploadStatus('Uploading...')
 
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'
-      const response = await axios.post(`${apiUrl}/api/video`, formData, {
+      const response = await axios.post(`${apiUrl}/api/video/upload`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
