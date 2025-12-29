@@ -1,13 +1,14 @@
 'use client'
 
 import { useState } from 'react'
+import axios from 'axios'
 
 export default function VideoUploadForm() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [uploadStatus, setUploadStatus] = useState<string>('')
   const [isUploading, setIsUploading] = useState(false)
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0]
 
@@ -18,7 +19,7 @@ export default function VideoUploadForm() {
       }
 
       // Validate file size (max 100MB)
-      const maxSize = 100 * 1024 * 1024 // 100MB in bytes
+      const maxSize = 200 * 1024 * 1024 // 100MB in bytes
       if (file.size > maxSize) {
         setUploadStatus('File size exceeds 100MB limit')
         return
@@ -26,42 +27,48 @@ export default function VideoUploadForm() {
 
       setSelectedFile(file)
       setUploadStatus('')
+
+      // Auto-upload the file
+      await handleUpload(file)
     }
   }
 
-  const handleUpload = async (e: React.FormEvent) => {
-    e.preventDefault()
-
-    if (!selectedFile) {
-      setUploadStatus('Please select a file first')
-      return
-    }
-
+  const handleUpload = async (file: File) => {
     const formData = new FormData()
-    formData.append('video', selectedFile)
+    formData.append('video', file)
 
     try {
       setIsUploading(true)
       setUploadStatus('Uploading...')
 
-      const response = await fetch('http://localhost:3000/api/video/upload', {
-        method: 'POST',
-        body: formData,
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'
+      const response = await axios.post(`${apiUrl}/api/video`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
       })
 
-      const data = await response.json()
-
-      if (response.ok) {
+      if (response.status === 200 || response.status === 201) {
         setUploadStatus('Video uploaded successfully! Processing will begin shortly.')
         setSelectedFile(null)
         // Reset file input
         const fileInput = document.getElementById('video-upload') as HTMLInputElement
         if (fileInput) fileInput.value = ''
       } else {
-        setUploadStatus(`Error: ${data.message || 'Upload failed'}`)
+        setUploadStatus(`Error: ${response.data.message || 'Upload failed'}`)
       }
     } catch (error) {
-      setUploadStatus('Error uploading video. Please check if the backend server is running.')
+      if (axios.isAxiosError(error)) {
+        if (error.response) {
+          setUploadStatus(`Error: ${error.response.data.message || 'Upload failed'}`)
+        } else if (error.request) {
+          setUploadStatus('Error uploading video. Please check if the backend server is running.')
+        } else {
+          setUploadStatus('Error uploading video. Please try again.')
+        }
+      } else {
+        setUploadStatus('Error uploading video. Please try again.')
+      }
       console.error('Upload error:', error)
     } finally {
       setIsUploading(false)
@@ -77,7 +84,7 @@ export default function VideoUploadForm() {
   }
 
   return (
-    <form onSubmit={handleUpload} className="space-y-6">
+    <div className="space-y-6">
       {/* Upload Area */}
       <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-8 text-center hover:border-indigo-500 dark:hover:border-indigo-400 transition-colors">
         <input
@@ -137,56 +144,6 @@ export default function VideoUploadForm() {
         </div>
       )}
 
-      {/* Upload Button */}
-      <button
-        type="submit"
-        disabled={!selectedFile || isUploading}
-        className="w-full bg-indigo-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-indigo-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
-      >
-        {isUploading ? (
-          <>
-            <svg
-              className="animate-spin h-5 w-5 text-white"
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-            >
-              <circle
-                className="opacity-25"
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="currentColor"
-                strokeWidth="4"
-              ></circle>
-              <path
-                className="opacity-75"
-                fill="currentColor"
-                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-              ></path>
-            </svg>
-            Uploading...
-          </>
-        ) : (
-          <>
-            <svg
-              className="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
-              />
-            </svg>
-            Upload and Process
-          </>
-        )}
-      </button>
-
       {/* Status Message */}
       {uploadStatus && (
         <div
@@ -225,6 +182,6 @@ export default function VideoUploadForm() {
           </div>
         </div>
       )}
-    </form>
+    </div>
   )
 }
