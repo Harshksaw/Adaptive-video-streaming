@@ -2,8 +2,10 @@
 
 import { useState } from 'react'
 import axios from 'axios'
+import { useRouter } from 'next/navigation'
 
 export default function VideoUploadForm() {
+  const router = useRouter()
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [uploadStatus, setUploadStatus] = useState<string>('')
   const [isUploading, setIsUploading] = useState(false)
@@ -41,19 +43,23 @@ export default function VideoUploadForm() {
       setIsUploading(true)
       setUploadStatus('Uploading...')
 
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
       const response = await axios.post(`${apiUrl}/api/video/upload`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
       })
 
-      if (response.status === 200 || response.status === 201) {
-        setUploadStatus('Video uploaded successfully! Processing will begin shortly.')
-        setSelectedFile(null)
-        // Reset file input
-        const fileInput = document.getElementById('video-upload') as HTMLInputElement
-        if (fileInput) fileInput.value = ''
+      if (response.status === 200 || response.status === 201 || response.status === 202) {
+        const { videoId } = response.data
+        setUploadStatus('Video uploaded successfully! Processing has started. Redirecting to player...')
+
+        // Redirect to video player after 2 seconds
+        setTimeout(() => {
+          if (videoId) {
+            router.push(`/stream/${videoId}`)
+          }
+        }, 2000)
       } else {
         setUploadStatus(`Error: ${response.data.message || 'Upload failed'}`)
       }
