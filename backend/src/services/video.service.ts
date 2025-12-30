@@ -52,7 +52,7 @@ export const processVideoForHLS = (
                 .on('end', () => {
                     //When the processing of this variant is done, add it to the master playlist
                     masterContent.push(
-                        `#EXT-X-STREAM-INF:BANDWIDTH=${resolution.bitRate * 1000},RESOLUTION=${resolution.width}x${resolution.height}\n${resolution.height}p/playlist.m3u8` 
+                        `#EXT-X-STREAM-INF:BANDWIDTH=${resolution.bitRate * 1000},RESOLUTION=${resolution.width}x${resolution.height}\nvideo_${resolution.height}p/playlist.m3u8`
 
                     )
                     countProcessing+=1;
